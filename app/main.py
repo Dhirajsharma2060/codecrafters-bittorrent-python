@@ -11,10 +11,10 @@ def bytes_to_str(data):
     elif isinstance(data, list):
         return [bytes_to_str(item) for item in data]
     elif isinstance(data, dict):
+         # Ensure both keys and values are converted to strings
         return {bytes_to_str(key): bytes_to_str(value) for key, value in data.items()}
     else:
-        raise TypeError(f"Type not serializable: {type(data)}")
-
+        return data  # Return the data as is if it's not bytes, list, or dict
 def main():
     command = sys.argv[1]
     if command == "decode":
