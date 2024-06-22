@@ -1,9 +1,5 @@
-import json
 import sys
 import bencodepy
-
-# Initialize the bencodepy Bencode class
-bc = bencodepy.Bencode(encoding="utf-8")
 
 def decode_bencode(bencoded_value):
     return bencodepy.decode(bencoded_value)
@@ -18,15 +14,35 @@ def bytes_to_str(data):
     else:
         return data
 
+def parse_torrent(file_path):
+    try:
+        with open(file_path, 'rb') as file:
+            bencoded_data = file.read()
+        decoded_data = decode_bencode(bencoded_data)
+        decoded_data = bytes_to_str(decoded_data)
+        tracker_url = decoded_data.get('announce', 'Unknown')
+        info_dict = decoded_data.get('info', {})
+        file_length = info_dict.get('length', 'Unknown')
+        
+        return tracker_url, file_length
+    except Exception as e:
+        print(f"Error parsing torrent file: {e}")
+        sys.exit(1)
+
 def main():
+    if len(sys.argv) != 3:
+        print("Usage: python script.py info <torrent_file>")
+        sys.exit(1)
+
     command = sys.argv[1]
-    if command == "decode":
-        bencoded_value = sys.argv[2].encode()
-        decoded_value = decode_bencode(bencoded_value)
-        converted_value = bytes_to_str(decoded_value)
-        print(json.dumps(converted_value))
+    if command == "info":
+        file_path = sys.argv[2]
+        tracker_url, file_length = parse_torrent(file_path)
+        print(f"Tracker URL: {tracker_url}")
+        print(f"Length: {file_length}")
     else:
-        raise NotImplementedError(f"Unknown command {command}")
+        print(f"Unknown command {command}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
