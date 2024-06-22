@@ -1,3 +1,4 @@
+import json
 import sys
 import bencodepy
 
@@ -33,12 +34,27 @@ def parse_torrent(file_path):
         sys.exit(1)
 
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python script.py info <torrent_file>")
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <command> [args]")
         sys.exit(1)
 
     command = sys.argv[1]
-    if command == "info":
+    if command == "decode":
+        if len(sys.argv) != 3:
+            print("Usage: python script.py decode <bencoded_string>")
+            sys.exit(1)
+        bencoded_value = sys.argv[2].encode()
+        try:
+            decoded_value = decode_bencode(bencoded_value)
+            converted_value = bytes_to_str(decoded_value)
+            print(json.dumps(converted_value))
+        except Exception as e:
+            print(f"Error decoding bencoded value: {e}")
+            sys.exit(1)
+    elif command == "info":
+        if len(sys.argv) != 3:
+            print("Usage: python script.py info <torrent_file>")
+            sys.exit(1)
         file_path = sys.argv[2]
         tracker_url, file_length = parse_torrent(file_path)
         print(f"Tracker URL: {tracker_url}")
