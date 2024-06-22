@@ -1,6 +1,7 @@
-import json
 import sys
 import bencodepy
+import hashlib
+import json
 
 def decode_bencode(bencoded_value):
     return bencodepy.decode(bencoded_value)
@@ -23,24 +24,27 @@ def parse_torrent(file_path):
         with open(file_path, 'rb') as file:
             bencoded_data = file.read()
         decoded_data = decode_bencode(bencoded_data)
-        decoded_data = bytes_to_str(decoded_data)
-        tracker_url = decoded_data.get('announce', 'Unknown')
-        info_dict = decoded_data.get('info', {})
-        file_length = info_dict.get('length', 'Unknown')
-        
-        return tracker_url, file_length
+        tracker_url = decoded_data.get(b'announce', b'Unknown').decode('utf-8')
+        info_dict = decoded_data.get(b'info', {})
+        file_length = info_dict.get(b'length', 'Unknown')
+
+        # Bencode the info dictionary and calculate the SHA-1 hash
+        bencoded_info_dict = bencodepy.encode(info_dict)
+        info_hash = hashlib.sha1(bencoded_info_dict).hexdigest()
+
+        return tracker_url, file_length, info_hash
     except Exception as e:
         print(f"Error parsing torrent file: {e}")
         sys.exit(1)
 
 def main():
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2:  # Check for at least 2 arguments
         print("Usage: python script.py <command> [args]")
         sys.exit(1)
 
     command = sys.argv[1]
-    if command == "decode":
-        if len(sys.argv) != 3:
+    if command == "decode":  # Handling the decode command
+        if len(sys.argv) != 3:  # Check for the correct number of arguments
             print("Usage: python script.py decode <bencoded_string>")
             sys.exit(1)
         bencoded_value = sys.argv[2].encode()
@@ -51,14 +55,15 @@ def main():
         except Exception as e:
             print(f"Error decoding bencoded value: {e}")
             sys.exit(1)
-    elif command == "info":
-        if len(sys.argv) != 3:
+    elif command == "info":  # Handling the info command
+        if len(sys.argv) != 3:  # Check for the correct number of arguments
             print("Usage: python script.py info <torrent_file>")
             sys.exit(1)
         file_path = sys.argv[2]
-        tracker_url, file_length = parse_torrent(file_path)
+        tracker_url, file_length, info_hash = parse_torrent(file_path)
         print(f"Tracker URL: {tracker_url}")
         print(f"Length: {file_length}")
+        print(f"Info Hash: {info_hash}")
     else:
         print(f"Unknown command {command}")
         sys.exit(1)
