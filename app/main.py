@@ -6,7 +6,10 @@ def decode_bencode(bencoded_value):
 
 def bytes_to_str(data):
     if isinstance(data, bytes):
-        return data.decode('utf-8')
+        try:
+            return data.decode('utf-8')
+        except UnicodeDecodeError:
+            return data  # Return raw bytes if decoding fails
     elif isinstance(data, list):
         return [bytes_to_str(item) for item in data]
     elif isinstance(data, dict):
