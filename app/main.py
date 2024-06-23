@@ -31,8 +31,11 @@ def parse_torrent(file_path):
         # Bencode the info dictionary and calculate the SHA-1 hash
         bencoded_info_dict = bencodepy.encode(info_dict)
         info_hash = hashlib.sha1(bencoded_info_dict).hexdigest()
-
-        return tracker_url, file_length, info_hash
+        #Extract length and piece
+        piece_length=info_dict.get(b'piece length', 'Unknown')
+        pieces = info_dict.get(b'pieces', b'')
+        piece_hashes = [pieces[i:i+20].hex() for i in range(0, len(pieces), 20)]
+        return tracker_url, file_length, info_hash, piece_length, piece_hashes
     except Exception as e:
         print(f"Error parsing torrent file: {e}")
         sys.exit(1)
@@ -60,10 +63,14 @@ def main():
             print("Usage: python script.py info <torrent_file>")
             sys.exit(1)
         file_path = sys.argv[2]
-        tracker_url, file_length, info_hash = parse_torrent(file_path)
+        tracker_url, file_length, info_hash,piece_length, piece_hashes = parse_torrent(file_path)
         print(f"Tracker URL: {tracker_url}")
         print(f"Length: {file_length}")
         print(f"Info Hash: {info_hash}")
+        print(f"Piece Length: {piece_length}")
+        print(f"Piece Hashes:{piece_hashes}")
+        for piece_hash in piece_hashes:
+            print(piece_hash)
     else:
         print(f"Unknown command {command}")
         sys.exit(1)
